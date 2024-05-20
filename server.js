@@ -12,6 +12,10 @@ const mongoose = require("mongoose")
 const methodOverride = require("method-override")
 const morgan = require("morgan")
 
+// * import express-session to save session data
+
+const session = require("express-session")
+
 // * import auth controller fron auth.js file
 
 const authController = require("./controllers/auth.js")
@@ -35,13 +39,26 @@ app.use(methodOverride("_method"))
 // * Morgan for logging HTTP requests
 app.use(morgan("dev"))
 
+// * use sessions for auth
+app.use(session({secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: true}))
+
 // ? Use the auth controller for any requests that start with /auth
 app.use("/auth", authController)
 
 // * GET request:
 
 app.get("/", async (req, res) => {
-    res.render("index.ejs")
+    res.render("index.ejs", {user: req.session.user})
+})
+
+// * Signed-in specific features:
+
+app.get("/vip-lounge", (req, res) => {
+    if (req.session.user) {
+        res.send(`Welcome to the fantasy zone, ${req.session.user.username}.`)
+    } else {
+        res.send("No account-less peasants allowed. >:(")
+    }
 })
 
 // * Listen for incoming requests

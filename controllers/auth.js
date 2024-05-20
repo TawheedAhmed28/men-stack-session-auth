@@ -38,4 +38,38 @@ router.post("/sign-up", async (req, res) => {
     res.send(`Thanks for signing up, ${user.username}!`)
 })
 
+router.get("/sign-in", (req, res) => {
+    res.render("auth/sign-in.ejs")
+})
+
+router.post("/sign-in", async (req, res) => {
+    // code to handle the request:
+    // user sends username + password
+    // check if the user exists first!
+    const userInDatabase = await User.findOne({username: req.body.username})
+    // if the user doesn't exist, give a generic failure message, so as not to give away any info unnecessarily
+    if (!userInDatabase) {
+        return res.send("Login failed. Please try again.")
+    }
+
+// okay, the user exists in the DB - let's see if they have the right password. Compare it with the hashed password we stored.
+
+    const validPassword = bcrypt.compareSync(req.body.password, userInDatabase.password)
+        if (!validPassword) {
+            return res.send("Login failed. Please try again.")
+        }
+
+    req.session.user = {
+        username: userInDatabase.username
+    }
+    
+    res.redirect("/")
+})
+
+router.get("/sign-out", (req, res) => {
+    // insert code here
+    req.session.destroy()
+    res.redirect("/")
+})
+
 module.exports = router
